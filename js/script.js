@@ -170,17 +170,6 @@ if (isMobile) {
     controls.verticalMin = 1.0;
     controls.verticalMax = 2.0;
     
-    // Add touch listeners
-    renderer.domElement.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        controls.handleTouchStart(e);
-    }, { passive: false });
-    
-    renderer.domElement.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        controls.handleTouchMove(e);
-    }, { passive: false });
-} else {
     // Desktop - use custom pointer lock controls
     setupMouseLock();
     setupKeyboardControls();
