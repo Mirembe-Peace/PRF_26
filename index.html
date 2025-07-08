@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <link rel="preconnect" href="https://storage.googleapis.com">
+    <link rel="preconnect" href="https://www.youtube.com">
+    <title>Pearl Rhythm Foundation Art Archive</title>
+   
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="loading-screen">
+        <img src="./assets/logow.png" alt="Loading..." class="loading-logo">
+        <div class="loading-progress">Loading Models: <span id="loading-percentage">0</span>%</div>
+        <div class="progress-bar">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+    </div>
+    <canvas class="canvas"></canvas>
+
+    <!-- Mobile Controls -->
+    <div id="touch-controls">
+        <div id="move-pad">
+            <div id="joystick"></div>
+        </div>
+    </div>
+    <div id="exhibit-loader" class="loader">
+  <div class="loader-spinner"></div>
+  <div class="loader-text">Loading Exhibit...</div>
+</div>
+
+    <div id="exhibit-ui">
+        <h2 id="exhibit-title"></h2>
+        <p id="exhibit-description"></p>
+        <button id="close-exhibit">Close Exhibit</button>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.154.0/examples/jsm/",
+                "gsap": "https://unpkg.com/gsap@3.12.5/index.js"
+            }
+        }
+    </script> 
+    <script type="module" src="./js/script.js"></script>
+</body>
+</html>
