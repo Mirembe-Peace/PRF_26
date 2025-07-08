@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 // import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { gsap } from 'gsap';
+//import { gsap } from 'gsap';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+
 
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         
@@ -12,9 +13,9 @@ const scene = new THREE.Scene();
 
 let touchControls;
 
-// Loading progress tracking
-let modelsLoaded = 0;
-const totalModels = 1; // Update this if you load more models
+// // Loading progress tracking
+// let modelsLoaded = 0;
+// const totalModels = 1; // Update this if you load more models
 
 // Camera setup
 const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -160,7 +161,7 @@ function setupTouchControls() {
     touchControls.style.transform = 'translateX(-50%)';
     touchControls.style.width = '150px';
     touchControls.style.height = '150px';
-    touchControls.style.display = 'none'; // Start hidden
+    touchControls.style.display = 'block'; 
     touchControls.style.pointerEvents = 'none';
     touchControls.style.zIndex = '1000';
     document.body.appendChild(touchControls);
@@ -274,34 +275,19 @@ function setupTouchControls() {
     }
 
     // Show controls after loading
-    document.querySelector('.loading-screen').addEventListener('transitionend', () => {
-        touchControls.style.display = 'block';
-    });
+    // document.querySelector('.loading-screen').addEventListener('transitionend', () => {
+    //     touchControls.style.display = 'block';
+    // });
 }
 
         // Modify your initialization
         function initControls() {
             if (isMobile) {
+                console.log('Setting up touch controls');
                 setupTouchControls();
 
                  renderer.antialias = false;
                  renderer.shadowMap.enabled = false;
-                
-                // Show fullscreen button on mobile
-                const fsButton = document.getElementById('fullscreen-button');
-                fsButton.style.display = 'block';
-                fsButton.addEventListener('click', () => {
-                    if (document.documentElement.requestFullscreen) {
-                        document.documentElement.requestFullscreen();
-                    } else if (document.documentElement.webkitRequestFullscreen) {
-                        document.documentElement.webkitRequestFullscreen();
-                    }
-                });
-                
-                // Show controls after loading
-                document.querySelector('.loading-screen').addEventListener('transitionend', () => {
-                    document.getElementById('touch-controls').style.display = 'flex';
-                });
             } else {
                 setupMouseLock();
                 setupKeyboardControls();
@@ -896,37 +882,59 @@ const loadingManager = new THREE.LoadingManager(
         updateLoadingProgress(loaded / total);
     }
 );
-
-// Load HDR
-new RGBELoader()
-    .setPath('https://storage.googleapis.com/pearl-artifacts-cdn/museum_model/')
-    .load('environment.hdr', function (texture) {
-        texture.mapping = THREE.EquirectangularReflectionMapping;
-        scene.background = texture;
-        scene.environment = texture;
-                        
-        const loader = new GLTFLoader(loadingManager);
-        loader.load('https://storage.googleapis.com/pearl-artifacts-cdn/museum_model/museum_test_1blend.gltf', (gltf) => {
-            const model = gltf.scene;
-            model.position.set(0, 0, 0);
-            model.scale.set(2, 2, 2);
-            scene.add(model);
-
-            createExhibitHotspots();
-            createPictureHotspots();
+// Loading the HDR environment map and museum model
+if (!isMobile) {
+    new RGBELoader()
+        .setPath('https://storage.googleapis.com/pearl-artifacts-cdn/museum_model/')
+        .load('environment.hdr', function (texture) {
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+            scene.background = texture;
+            scene.environment = texture;
             
-            // Setup controls after everything is loaded
-            setupMouseLock();
-            setupKeyboardControls();
-            initControls();
+            // Load museum model after environment is set
+            const loader = new GLTFLoader(loadingManager);
+            loader.load('https://storage.googleapis.com/pearl-artifacts-cdn/museum_model/museum_test_1blend.gltf', (gltf) => {
+                const model = gltf.scene;
+                model.position.set(0, 0, 0);
+                model.scale.set(2, 2, 2);
+                scene.add(model);
 
-             },
-    undefined, // Progress callback
-    (error) => {
-        console.error('Error loading museum model:', error);
-
+                createExhibitHotspots();
+                createPictureHotspots();
+                
+            }, undefined, (error) => {
+                console.error('Error loading museum model:', error);
+            });
+        }, undefined, (error) => {
+            console.error('Error loading HDR environment:', error);
+            // Even if HDR fails, still load the museum model
+            loadMuseumModel();
         });
+} else {
+    // On mobile, just load the museum model without environment texture
+    loadMuseumModel();
+}
+
+function loadMuseumModel() {
+    const loader = new GLTFLoader(loadingManager);
+    loader.load('https://storage.googleapis.com/pearl-artifacts-cdn/museum_model/museum_test_1blend.gltf', (gltf) => {
+        const model = gltf.scene;
+        model.position.set(0, 0, 0);
+        model.scale.set(2, 2, 2);
+        scene.add(model);
+
+        
+        createExhibitHotspots();
+        createPictureHotspots();
+        
+        
+        
+    
+    }, undefined, (error) => {
+        console.error('Error loading museum model:', error);
     });
+}
+
 
     //instruction button
 function createInstructionButton() {
@@ -994,6 +1002,9 @@ function createInstructionButton() {
 
 
 document.addEventListener('DOMContentLoaded', function() {
+    
+    initControls();
+    console.log('Setting up touch controls');
     createHomeButton();
     createInstructionButton(); 
 });
@@ -1017,7 +1028,3 @@ const animate = () => {
 
 animate();
 
-document.addEventListener('DOMContentLoaded', function() {
-    createHomeButton();
-    createInstructionButton();
-});
