@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 //import { gsap } from 'gsap';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+import { FirstPersonControls } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/controls/FirstPersonControls.js';
 
 
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -11,7 +12,7 @@ const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const canvas = document.querySelector('.canvas');
 const scene = new THREE.Scene();
 
-let touchControls;
+
 
 // // Loading progress tracking
 // let modelsLoaded = 0;
@@ -32,14 +33,14 @@ const lookSpeed = 0.002;
 const verticalLookLimit = Math.PI / 3; // Limit vertical look angle
 
 // Movement state
-const movement = {
+const movement = !isMobile ? {
     forward: false,
     backward: false,
     left: false,
     right: false,
     up: false,
     down: false
-};
+} : null;
 
 // Mouse movement variables
 let isMouseLocked = false;
@@ -150,149 +151,42 @@ function updateMovement(delta) {
     }
 }
 
-// Add touch controls for movement
-function setupTouchControls() {
-    // Create controls container
-    const touchControls = document.createElement('div');
-    touchControls.id = 'touch-controls';
-    touchControls.style.position = 'fixed';
-    touchControls.style.bottom = '20px';
-    touchControls.style.left = '50%';
-    touchControls.style.transform = 'translateX(-50%)';
-    touchControls.style.width = '150px';
-    touchControls.style.height = '150px';
-    touchControls.style.display = 'block'; 
-    touchControls.style.pointerEvents = 'none';
-    touchControls.style.zIndex = '1000';
-    document.body.appendChild(touchControls);
-
-    // Movement pad (joystick background)
-    const movePad = document.createElement('div');
-    movePad.id = 'move-pad';
-    movePad.style.width = '100%';
-    movePad.style.height = '100%';
-    movePad.style.backgroundColor = 'rgba(0,0,0,0.2)';
-    movePad.style.borderRadius = '50%';
-    movePad.style.position = 'relative';
-    movePad.style.pointerEvents = 'auto';
-    movePad.style.touchAction = 'none'; // Important for mobile
-    movePad.style.userSelect = 'none'; // Prevent text selection
-    touchControls.appendChild(movePad);
-
-    // Joystick handle
-    const joystick = document.createElement('div');
-    joystick.id = 'joystick';
-    joystick.style.width = '40%';
-    joystick.style.height = '40%';
-    joystick.style.backgroundColor = 'rgba(255,255,255,0.5)';
-    joystick.style.borderRadius = '50%';
-    joystick.style.position = 'absolute';
-    joystick.style.top = '50%';
-    joystick.style.left = '50%';
-    joystick.style.transform = 'translate(-50%, -50%)';
-    joystick.style.pointerEvents = 'none';
-    joystick.style.transition = 'transform 0.1s';
-    joystick.style.opacity = '0.5';
-    movePad.appendChild(joystick);
-
-    let activeTouchId = null;
-    const maxDistance = 45; // Max distance joystick can move from center
-
-    // Touch start handler
-    movePad.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (activeTouchId === null && e.touches.length > 0) {
-            activeTouchId = e.touches[0].identifier;
-            updateJoystickPosition(e.touches[0].clientX, e.touches[0].clientY);
-        }
-    }, { passive: false });
-
-    // Touch move handler
-    document.addEventListener('touchmove', (e) => {
-        if (activeTouchId !== null) {
-            const touch = Array.from(e.touches).find(t => t.identifier === activeTouchId);
-            if (touch) {
-                e.preventDefault();
-                updateJoystickPosition(touch.clientX, touch.clientY);
-                
-                const rect = movePad.getBoundingClientRect();
-                const centerX = rect.left + rect.width/2;
-                const centerY = rect.top + rect.height/2;
-                
-                const deltaX = touch.clientX - centerX;
-                const deltaY = touch.clientY - centerY;
-                const distance = Math.min(Math.sqrt(deltaX*deltaX + deltaY*deltaY), maxDistance);
-                
-                // Calculate movement direction (normalized values between 0 and 1)
-                const forwardAmount = Math.max(0, -deltaY / maxDistance);
-                const backwardAmount = Math.max(0, deltaY / maxDistance);
-                const leftAmount = Math.max(0, -deltaX / maxDistance);
-                const rightAmount = Math.max(0, deltaX / maxDistance);
-                
-                // Apply thresholds to prevent accidental movements
-                movement.forward = forwardAmount > 0.2;
-                movement.backward = backwardAmount > 0.2;
-                movement.left = leftAmount > 0.2;
-                movement.right = rightAmount > 0.2;
-            }
-        }
-    }, { passive: false });
-
-    // Touch end handler
-    document.addEventListener('touchend', (e) => {
-        if (activeTouchId !== null && 
-            Array.from(e.changedTouches).some(t => t.identifier === activeTouchId)) {
-            resetJoystick();
-            activeTouchId = null;
-            // Reset movement
-            movement.forward = false;
-            movement.backward = false;
-            movement.left = false;
-            movement.right = false;
-        }
-    });
-
-    function updateJoystickPosition(x, y) {
-        const rect = movePad.getBoundingClientRect();
-        const centerX = rect.left + rect.width/2;
-        const centerY = rect.top + rect.height/2;
-        
-        const deltaX = x - centerX;
-        const deltaY = y - centerY;
-        const distance = Math.min(Math.sqrt(deltaX*deltaX + deltaY*deltaY), maxDistance);
-        const angle = Math.atan2(deltaY, deltaX);
-        
-        const joystickX = distance * Math.cos(angle);
-        const joystickY = distance * Math.sin(angle);
-        
-        joystick.style.transform = `translate(calc(-50% + ${joystickX}px), calc(-50% + ${joystickY}px))`;
-        joystick.style.opacity = '1';
-    }
-
-    function resetJoystick() {
-        joystick.style.transform = 'translate(-50%, -50%)';
-        joystick.style.opacity = '0.5';
-    }
-
-    // Show controls after loading
-    // document.querySelector('.loading-screen').addEventListener('transitionend', () => {
-    //     touchControls.style.display = 'block';
-    // });
+if (!isMobile) {
+    setupMouseLock();
+    setupKeyboardControls();
 }
 
-        // Modify your initialization
-        function initControls() {
-            if (isMobile) {
-                console.log('Setting up touch controls');
-                setupTouchControls();
+//mobile phone controls
+let controls;
+let customControlsActive = !isMobile; // Use custom controls for desktop
 
-                 renderer.antialias = false;
-                 renderer.shadowMap.enabled = false;
-            } else {
-                setupMouseLock();
-                setupKeyboardControls();
-            }
-        }
+if (isMobile) {
+    // Mobile - use FirstPersonControls
+    controls = new FirstPersonControls(camera, renderer.domElement);
+    controls.movementSpeed = 5;
+    controls.lookSpeed = 0.1;
+    controls.lookVertical = true;
+    controls.constrainVertical = true;
+    controls.verticalMin = 1.0;
+    controls.verticalMax = 2.0;
+    
+    // Add touch listeners
+    renderer.domElement.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        controls.handleTouchStart(e);
+    }, { passive: false });
+    
+    renderer.domElement.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        controls.handleTouchMove(e);
+    }, { passive: false });
+} else {
+    // Desktop - use custom pointer lock controls
+    setupMouseLock();
+    setupKeyboardControls();
+}
+
+
 
 
 //lights
@@ -705,6 +599,10 @@ function onMouseClick(event) {
     });
     
     let navIntersects = raycaster.intersectObjects(allNavObjects);
+
+    if (isMobile) {
+        event.preventDefault();
+    }
     
     if (navIntersects.length > 0) {
         let clickedObject = navIntersects[0].object;
@@ -755,7 +653,7 @@ function onMouseClick(event) {
 }
 
 // Replace click event with pointerup for better mobile support
-canvas.addEventListener('pointerup', onMouseClick, false);
+canvas.addEventListener('pointerdown', onMouseClick, false);
 
 window.addEventListener('click', onMouseClick, false);
 
@@ -961,19 +859,28 @@ function createInstructionButton() {
     instructionContent.style.overflow = 'auto';
     
     instructionContent.innerHTML = `
-        <h2>Welcome to the Pearl Rhythm Virtual Museum! Here's how to navigate:</h2>
-            <p>With desktop: Use the following keys to navigate:</p>
-            <ul>
-                <li><strong>W</strong>: Move forward</li>
-                <li><strong>S</strong>: Move backward</li>
-                <li><strong>A</strong>: Move left</li>
-                <li><strong>D</strong>: Move right</li>
-                <li><strong>Q</strong>: Move up</li>
-                <li><strong>E</strong>: Move down</li>
-                <li><strong>Mouse</strong>: Look around</li>
-                <li><strong>Esc</strong>: To return the cursor</li>
-                <li><strong>Click on the artifacts and pictures to reveal details</strong></li>
-            </ul>
+            <h2>Welcome to the Pearl Rhythm Virtual Museum! Here's how to navigate:</h2>
+    ${isMobile ? `
+        <p>With mobile:</p>
+        <ul>
+            <li><strong>Touch and drag</strong>: Look around</li>
+            <li><strong>Virtual joystick</strong>: Move around (if implemented)</li>
+            <li><strong>Tap on artifacts and pictures</strong>: Reveal details</li>
+        </ul>
+    ` : `
+        <p>With desktop:</p>
+        <ul>
+            <li><strong>W</strong>: Move forward</li>
+            <li><strong>S</strong>: Move backward</li>
+            <li><strong>A</strong>: Move left</li>
+            <li><strong>D</strong>: Move right</li>
+            <li><strong>Q</strong>: Move up</li>
+            <li><strong>E</strong>: Move down</li>
+            <li><strong>Mouse</strong>: Look around</li>
+            <li><strong>Esc</strong>: To return the cursor</li>
+            <li><strong>Click on the artifacts and pictures to reveal details</strong></li>
+        </ul>
+    `}
         
         <button id="close-instructions" style="margin-top: 15px; padding: 8px 16px; background: #555; color: white; border: none; border-radius: 4px; cursor: pointer;">Got it!</button>
     `;
@@ -1003,9 +910,7 @@ function createInstructionButton() {
 
 document.addEventListener('DOMContentLoaded', function() {
     
-    initControls();
-    console.log('Setting up touch controls');
-    createHomeButton();
+        createHomeButton();
     createInstructionButton(); 
 });
 
@@ -1017,8 +922,11 @@ let delta = 0;
 const animate = () => {
     delta = clock.getDelta();
     
-    // Update movement if mouse is locked (in first-person mode)
-    if (isMouseLocked) {
+     if (isMobile) {
+        // Update FirstPersonControls for mobile
+        controls.update(delta);
+    } else if (isMouseLocked) {
+        // Update custom movement for desktop
         updateMovement(delta);
     }
     
