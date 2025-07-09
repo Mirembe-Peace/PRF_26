@@ -605,35 +605,6 @@ function onMouseClick(event) {
     
     raycaster.setFromCamera(mouse, camera);
     
-    // Check for navigation hotspots first
-    const allNavObjects = [];
-    hotspots.forEach(h => {
-        allNavObjects.push(h.mesh);
-        h.mesh.children.forEach(child => allNavObjects.push(child));
-    });
-    
-    let navIntersects = raycaster.intersectObjects(allNavObjects);
-
-    if (isMobile) {
-        event.preventDefault();
-    }
-    
-    if (navIntersects.length > 0) {
-        let clickedObject = navIntersects[0].object;
-        while (clickedObject.parent && !hotspots.some(h => h.mesh === clickedObject)) {
-            clickedObject = clickedObject.parent;
-        }
-        
-        const clickedNavHotspot = hotspots.find(h => h.mesh === clickedObject);
-        if (clickedNavHotspot) {
-            moveCameraToPosition(clickedNavHotspot.targetPosition);
-            return;
-        }
-        else {
-            console.warn("Clicked on a navigation hotspot but no data found.");
-        }
-    }
-    
     // Check for exhibit hotspots
     const allExhibitObjects = exhibitHotspots.map(h => h.mesh);
     const exhibitIntersects = raycaster.intersectObjects(allExhibitObjects);
@@ -949,61 +920,41 @@ const animate = () => {
 };
 
 animate();
+function updatePlayer() {
+  const angle = controls.getAzimuthalAngle();
+  
+  if (fwdValue > 0) {
+    tempVector
+      .set(0, 0, -fwdValue)
+      .applyAxisAngle(upVector, angle);
+    camera.position.addScaledVector(tempVector, 1);
+  }
 
-function updatePlayer(){
-  // move the player
-  const angle = controls.getAzimuthalAngle()
-  
-    if (fwdValue > 0) {
-        tempVector
-          .set(0, 0, -fwdValue)
-          .applyAxisAngle(upVector, angle)
-        mesh.position.addScaledVector(
-          tempVector,
-          1
-        )
-      }
-  
-      if (bkdValue > 0) {
-        tempVector
-          .set(0, 0, bkdValue)
-          .applyAxisAngle(upVector, angle)
-        mesh.position.addScaledVector(
-          tempVector,
-          1
-        )
-      }
+  if (bkdValue > 0) {
+    tempVector
+      .set(0, 0, bkdValue)
+      .applyAxisAngle(upVector, angle);
+    camera.position.addScaledVector(tempVector, 1);
+  }
 
-      if (lftValue > 0) {
-        tempVector
-          .set(-lftValue, 0, 0)
-          .applyAxisAngle(upVector, angle)
-        mesh.position.addScaledVector(
-          tempVector,
-          1
-        )
-      }
+  if (lftValue > 0) {
+    tempVector
+      .set(-lftValue, 0, 0)
+      .applyAxisAngle(upVector, angle);
+    camera.position.addScaledVector(tempVector, 1);
+  }
 
-      if (rgtValue > 0) {
-        tempVector
-          .set(rgtValue, 0, 0)
-          .applyAxisAngle(upVector, angle)
-        mesh.position.addScaledVector(
-          tempVector,
-          1
-        )
-      }
-  
-  mesh.updateMatrixWorld()
-  
-  //controls.target.set( mesh.position.x, mesh.position.y, mesh.position.z );
-  // reposition camera
-  camera.position.sub(controls.target)
-  controls.target.copy(mesh.position)
-  camera.position.add(mesh.position)
-  
-  
-};
+  if (rgtValue > 0) {
+    tempVector
+      .set(rgtValue, 0, 0)
+      .applyAxisAngle(upVector, angle);
+    camera.position.addScaledVector(tempVector, 1);
+  }
+
+  // Update controls target to look in the direction of movement
+  controls.target.copy(camera.position);
+  controls.target.z -= 1; // Look slightly ahead
+}
 
 function addJoystick(){
    const options = {
