@@ -296,12 +296,11 @@ body{
   position: fixed;
   width: calc(100% - 20px);
   height: 50vh;
-  background-color: 'none';
   pointer-events: none;
   z-index: 11;
   top: auto;
-  bottom: 120px;
-  left: 10px;
+  bottom: 20px;
+  left: 50%;
   touch-action: manipulation;
 }
 
@@ -309,23 +308,21 @@ body{
   pointer-events: auto;
   display: block;
   position: absolute;
-  bottom: 0;
-  left: 0;
+  bottom: 20px;
+  left: 50%;
   background-color: transparent;
   width: 120px;
   height: 120px;
   z-index: 12;
   touch-action: manipulation;
-  background-color: rgba(0, 0, 0, 0.2);
 }
 
 #mobileInterface #joystickWrapper2 {
   pointer-events: auto;
   display: block;
   position: absolute;
-  bottom: 0;
-  right: 0;
-  left: auto;
+  bottom: 20px;
+  left: 50%;
   background-color: transparent;
   width: 50vw;
   height: 140px;
