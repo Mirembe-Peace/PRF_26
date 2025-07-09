@@ -161,7 +161,7 @@ let upVector = new THREE.Vector3(0, 1, 0);
 let joyManager;
 
 var width = window.innerWidth,
-    height = window.innerHeight;
+    height = window.innerHeight
 
 if (!isMobile) {
     setupMouseLock();
