@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-// import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/controls/OrbitControls.js"
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 //import { gsap } from 'gsap';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { FirstPersonControls } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/controls/FirstPersonControls.js';
+//import { FirstPersonControls } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/controls/FirstPersonControls.js';
 
 
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -151,28 +151,56 @@ function updateMovement(delta) {
     }
 }
 
+// vars
+let fwdValue = 0;
+let bkdValue = 0;
+let rgtValue = 0;
+let lftValue = 0;
+let tempVector = new THREE.Vector3();
+let upVector = new THREE.Vector3(0, 1, 0);
+let joyManager;
+
+var width = window.innerWidth,
+    height = window.innerHeight;
+
 if (!isMobile) {
     setupMouseLock();
     setupKeyboardControls();
 }
+else{
 
 //mobile phone controls
-let controls;
-let customControlsActive = !isMobile; // Use custom controls for desktop
 
-if (isMobile) {
-    // Mobile - use FirstPersonControls
-    controls = new FirstPersonControls(camera, renderer.domElement);
-    controls.movementSpeed = 5;
-    controls.lookSpeed = 0.1;
-    controls.lookVertical = true;
-    controls.constrainVertical = true;
-    controls.verticalMin = 1.0;
-    controls.verticalMax = 2.0;
-    
-    // Desktop - use custom pointer lock controls
-    setupMouseLock();
-    setupKeyboardControls();
+
+// Add OrbitControls so that we can pan around with the mouse.
+var controls = new OrbitControls(camera, renderer.domElement);
+controls.maxDistance = 100;
+controls.minDistance = 100;
+      //controls.maxPolarAngle = (Math.PI / 4) * 3;
+      controls.maxPolarAngle = Math.PI/2 ;
+      controls.minPolarAngle = 0;
+      controls.autoRotate = false;
+      controls.autoRotateSpeed = 0;
+      controls.rotateSpeed = 0.4;
+      controls.enableDamping = false;
+      controls.dampingFactor = 0.1;
+      controls.enableZoom = false;
+      controls.enablePan = false;
+      controls.minAzimuthAngle = - Math.PI/2; // radians
+      controls.maxAzimuthAngle = Math.PI/4 // radians
+
+
+// added joystick + movement
+addJoystick();
+
+function resize(){
+  let w = window.innerWidth;
+  let h = window.innerHeight;
+  
+  renderer.setSize(w,h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
 }
 
 //lights
@@ -909,8 +937,8 @@ const animate = () => {
     delta = clock.getDelta();
     
      if (isMobile) {
-        // Update FirstPersonControls for mobile
-        controls.update(delta);
+        updatePlayer();
+        controls.update();
     } else if (isMouseLocked) {
         // Update custom movement for desktop
         updateMovement(delta);
@@ -922,3 +950,104 @@ const animate = () => {
 
 animate();
 
+function updatePlayer(){
+  // move the player
+  const angle = controls.getAzimuthalAngle()
+  
+    if (fwdValue > 0) {
+        tempVector
+          .set(0, 0, -fwdValue)
+          .applyAxisAngle(upVector, angle)
+        mesh.position.addScaledVector(
+          tempVector,
+          1
+        )
+      }
+  
+      if (bkdValue > 0) {
+        tempVector
+          .set(0, 0, bkdValue)
+          .applyAxisAngle(upVector, angle)
+        mesh.position.addScaledVector(
+          tempVector,
+          1
+        )
+      }
+
+      if (lftValue > 0) {
+        tempVector
+          .set(-lftValue, 0, 0)
+          .applyAxisAngle(upVector, angle)
+        mesh.position.addScaledVector(
+          tempVector,
+          1
+        )
+      }
+
+      if (rgtValue > 0) {
+        tempVector
+          .set(rgtValue, 0, 0)
+          .applyAxisAngle(upVector, angle)
+        mesh.position.addScaledVector(
+          tempVector,
+          1
+        )
+      }
+  
+  mesh.updateMatrixWorld()
+  
+  //controls.target.set( mesh.position.x, mesh.position.y, mesh.position.z );
+  // reposition camera
+  camera.position.sub(controls.target)
+  controls.target.copy(mesh.position)
+  camera.position.add(mesh.position)
+  
+  
+};
+
+function addJoystick(){
+   const options = {
+        zone: document.getElementById('joystickWrapper1'),
+        size: 120,
+        multitouch: true,
+        maxNumberOfNipples: 2,
+        mode: 'static',
+        restJoystick: true,
+        shape: 'circle',
+        // position: { top: 20, left: 20 },
+        position: { top: '60px', left: '60px' },
+        dynamicPage: true,
+      }
+   
+   
+  joyManager = nipplejs.create(options);
+  
+joyManager['0'].on('move', function (evt, data) {
+        const forward = data.vector.y
+        const turn = data.vector.x
+
+        if (forward > 0) {
+          fwdValue = Math.abs(forward)
+          bkdValue = 0
+        } else if (forward < 0) {
+          fwdValue = 0
+          bkdValue = Math.abs(forward)
+        }
+
+        if (turn > 0) {
+          lftValue = 0
+          rgtValue = Math.abs(turn)
+        } else if (turn < 0) {
+          lftValue = Math.abs(turn)
+          rgtValue = 0
+        }
+      })
+
+     joyManager['0'].on('end', function (evt) {
+        bkdValue = 0
+        fwdValue = 0
+        lftValue = 0
+        rgtValue = 0
+      })
+  
+}
