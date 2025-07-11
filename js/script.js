@@ -99,46 +99,70 @@ function onMouseMove(e) {
 
 // Keyboard controls
 // Keyboard controls
-function setupKeyboardControls() {
-    document.addEventListener('keydown', (event) => {
-        switch (event.code()) {
-            case 'ArrowUp': movement.forward = true; break;
-            case 'ArrowDown': movement.backward = true; break;
-            case 'ArrowLeft': movement.left = true; break;
-            case 'ArrowRight': movement.right = true; break;
-        }
-    });
 
-    document.addEventListener('keyup', (event) => {
-        switch (event.code()) {
-            case 'ArrowUp': movement.forward = false; break;
-            case 'ArrowDown': movement.backward = false; break;
-            case 'ArrowLeft': movement.left = false; break;
-            case 'ArrowRight': movement.right = false; break;
-        }
-    });
-}
+				const onKeyDown = function ( event ) {
 
-// Movement update function
-function updateMovement(delta) {
-    const actualMoveSpeed = moveSpeed * delta;
+					switch ( event.code ) {
 
-    // Forward/backward movement
-    if (movement.forward) {
-        camera.translateZ(-actualMoveSpeed);
-    }
-    if (movement.backward) {
-        camera.translateZ(actualMoveSpeed);
-    }
+						case 'ArrowUp':
+						case 'KeyW':
+							moveForward = true;
+							break;
 
-    // Left/right movement
-    if (movement.left) {
-        camera.translateX(-actualMoveSpeed);
-    }
-    if (movement.right) {
-        camera.translateX(actualMoveSpeed);
-    }
-}
+						case 'ArrowLeft':
+						case 'KeyA':
+							moveLeft = true;
+							break;
+
+						case 'ArrowDown':
+						case 'KeyS':
+							moveBackward = true;
+							break;
+
+						case 'ArrowRight':
+						case 'KeyD':
+							moveRight = true;
+							break;
+
+						case 'Space':
+							if ( canJump === true ) velocity.y += 350;
+							canJump = false;
+							break;
+
+					}
+
+				};
+
+				const onKeyUp = function ( event ) {
+
+					switch ( event.code ) {
+
+						case 'ArrowUp':
+						case 'KeyW':
+							moveForward = false;
+							break;
+
+						case 'ArrowLeft':
+						case 'KeyA':
+							moveLeft = false;
+							break;
+
+						case 'ArrowDown':
+						case 'KeyS':
+							moveBackward = false;
+							break;
+
+						case 'ArrowRight':
+						case 'KeyD':
+							moveRight = false;
+							break;
+
+					}
+
+				};
+
+				document.addEventListener( 'keydown', onKeyDown );
+				document.addEventListener( 'keyup', onKeyUp );
 
 // vars
 let fwdValue = 0;
@@ -152,11 +176,8 @@ let joyManager;
 var width = window.innerWidth,
     height = window.innerHeight
 
-if (!isMobile) {
-    setupMouseLock();
-    setupKeyboardControls();
-}
-else{
+
+if(isMobile) {
 
 //mobile phone controls
 
