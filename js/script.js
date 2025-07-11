@@ -99,10 +99,18 @@ function onMouseMove(e) {
 
 // Keyboard controls
 
+            let raycaster;
+
 			let moveForward = false;
 			let moveBackward = false;
 			let moveLeft = false;
 			let moveRight = false;
+
+            let prevTime = performance.now();
+			const velocity = new THREE.Vector3();
+			const direction = new THREE.Vector3();
+			const vertex = new THREE.Vector3();
+			const color = new THREE.Color();
 // Keyboard controls
 
 				const onKeyDown = function ( event ) {
@@ -169,6 +177,8 @@ function onMouseMove(e) {
 				document.addEventListener( 'keydown', onKeyDown );
 				document.addEventListener( 'keyup', onKeyUp );
 
+                raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
+
 // vars
 let fwdValue = 0;
 let bkdValue = 0;
@@ -217,6 +227,13 @@ function resize(){
   camera.updateProjectionMatrix();
 }
 }
+
+function initControls() {
+            if(!isMobile) {
+                setupMouseLock();
+                setupKeyboardControls();
+            }
+        }
 
 //lights
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -609,7 +626,7 @@ function closeExhibit(event) {
     }
 }
 
-const raycaster = new THREE.Raycaster();
+
 const mouse = new THREE.Vector2();
 
 function onMouseClick(event) {
@@ -824,10 +841,7 @@ function loadMuseumModel() {
         
         createExhibitHotspots();
         createPictureHotspots();
-        
-        
-        
-    
+        initControls();
     }, undefined, (error) => {
         console.error('Error loading museum model:', error);
     });
@@ -919,14 +933,58 @@ let delta = 0;
 
 const animate = () => {
     delta = clock.getDelta();
+    const time = performance.now();
     
      if (isMobile) {
         updatePlayer();
         controls.update();
-    } else if (isMouseLocked) {
-        // Update custom movement for desktop
-        updateMovement(delta);
-    }
+    } else if ( controls.isLocked === true ) {
+
+					raycaster.ray.origin.copy( controls.object.position );
+					raycaster.ray.origin.y -= 10;
+
+					const intersections = raycaster.intersectObjects( objects, false );
+
+					const onObject = intersections.length > 0;
+
+					const delta = ( time - prevTime ) / 1000;
+
+					velocity.x -= velocity.x * 10.0 * delta;
+					velocity.z -= velocity.z * 10.0 * delta;
+
+					velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
+
+					direction.z = Number( moveForward ) - Number( moveBackward );
+					direction.x = Number( moveRight ) - Number( moveLeft );
+					direction.normalize(); // this ensures consistent movements in all directions
+
+					if ( moveForward || moveBackward ) velocity.z -= direction.z * 400.0 * delta;
+					if ( moveLeft || moveRight ) velocity.x -= direction.x * 400.0 * delta;
+
+					if ( onObject === true ) {
+
+						velocity.y = Math.max( 0, velocity.y );
+						canJump = true;
+
+					}
+
+					controls.moveRight( - velocity.x * delta );
+					controls.moveForward( - velocity.z * delta );
+
+					controls.object.position.y += ( velocity.y * delta ); // new behavior
+
+					if ( controls.object.position.y < 10 ) {
+
+						velocity.y = 0;
+						controls.object.position.y = 10;
+
+						canJump = true;
+
+					}
+
+				}
+
+				prevTime = time;
     
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
