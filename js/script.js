@@ -938,7 +938,7 @@ const animate = () => {
      if (isMobile) {
         updatePlayer();
         controls.update();
-    } else if ( controls.isLocked === true ) {
+    } else if ( controls.isMouseLocked === true ) {
 
 					raycaster.ray.origin.copy( controls.object.position );
 					raycaster.ray.origin.y -= 10;
