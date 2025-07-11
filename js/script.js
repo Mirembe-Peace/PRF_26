@@ -98,6 +98,11 @@ function onMouseMove(e) {
 }
 
 // Keyboard controls
+
+			let moveForward = false;
+			let moveBackward = false;
+			let moveLeft = false;
+			let moveRight = false;
 // Keyboard controls
 
 				const onKeyDown = function ( event ) {
